@@ -1,0 +1,50 @@
+# Sensitive Files / API Keys
+# =========================
+# This is the most important part for your API key.
+# It prevents your .env file (containing your Gemini API key)
+# from being committed to your GitHub repository.
+.env
+
+# Python specific files
+# =====================
+# Virtual environment directory
+venv/
+.venv/
+
+# Byte-code files
+__pycache__/
+*.pyc
+
+# Distribution / build files
+build/
+dist/
+*.egg-info/
+.pytest_cache/ # If you use pytest for testing
+
+# Operating System / Editor specific files
+# ========================================
+# macOS specific files
+.DS_Store
+
+# Windows specific files
+Thumbs.db
+
+# IDE specific files
+# PyCharm
+.idea/
+
+# VS Code (uncomment if you don't want to share workspace settings)
+# .vscode/
+
+# Jupyter Notebook Checkpoints (if you use notebooks in your project)
+.ipynb_checkpoints/
+
+# Log files (if your app generates logs)
+*.log
+logs/
+
+# Streamlit specific (optional, mostly if temporary/local files are generated)
+# =========================================================================
+# Streamlit might create a local cache or log directory
+# .streamlit/local/
+# .streamlit/log.txt

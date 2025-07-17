@@ -10,7 +10,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import io
 import json 
 
-st.set_page_config(page_title="Decision AI Assistant ", page_icon="🤖", layout="centered")
+st.set_page_config(page_title="Decision AI Assistant ", page_icon="🤖", layout="wide")
 st.title("Bem vindo ao Decision AI, nosso assistente de recrutamento")
 
 # Load API key from .env

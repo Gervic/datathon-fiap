@@ -272,7 +272,7 @@ def load_job_descriptions(json_path="vagas.json"):
               seen.add(job_id)
               vagas_list.append({'job_id': job_id,
                                   'titulo':f"{job_id} - {info.get('titulo_vaga', '')}",
-                                 'job_text': job_text
+                                 'descricao': job_text
                                 })
         return vagas_list
     except FileNotFoundError:

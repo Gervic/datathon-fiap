@@ -10,7 +10,6 @@ import io
 
 st.set_page_config(page_title="Decision AI Assistant ", page_icon="🤖", layout="centered")
 st.title("Bem vindo ao Decision AI, nosso assistente de recrutamento")
-st.write("O que gostaria de fazer hoje?")
 
 # Load API key from .env
 load_dotenv()
@@ -163,8 +162,7 @@ particles_js = """<!DOCTYPE html>
 </body>
 </html>
 """
-
-
+  
 # --- 3. Initialize Session State Variables ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -180,6 +178,19 @@ if "job_description" not in st.session_state:
 
 if "analysis_results" not in st.session_state:
     st.session_state.analysis_results = [] # Stores list of dicts: {name, score, analysis}
+
+if "job_list" not in st.session_state:
+    st.session_state.job_list = [] # Stores the parsed job data from vagas.json
+
+if "selected_job_title" not in st.session_state:
+    st.session_state.selected_job_title = "Selecionar uma vaga" # Default option for selectbox
+  
+if "show_animation" not in st.session_state:
+    st.session_state.show_animation = True
+
+if st.session_state.show_animation:
+    components.html(particles_js, height=370, scrolling=False)
+
 
 # --- 4. Helper Functions for Text Extraction ---
 def extract_text_from_pdf(file):
@@ -232,7 +243,27 @@ def to_gemini_history(streamlit_messages):
         })
     return gemini_format
 
-# --- 7. Initial Welcome Message and Action Choice ---
+# --- 7. Load Job Descriptions from JSON ---
+# This function will be called once per session or on app reload
+@st.cache_data # Cache the data to avoid re-reading the file on every rerun
+def load_job_descriptions(json_path="vagas.json"):
+    try:
+        with open(json_path, "r", encoding="utf-8") as f:
+            jobs = json.load(f)
+        return jobs
+    except FileNotFoundError:
+        st.error(f"Erro: Arquivo '{json_path}' não encontrado. Por favor, verifique o caminho.")
+        return []
+    except json.JSONDecodeError:
+        st.error(f"Erro: Não foi possível ler '{json_path}'. Verifique o formato do JSON.")
+        return []
+
+# Load jobs when the app starts
+if not st.session_state.job_list:
+    st.session_state.job_list = load_job_descriptions()
+
+
+# --- 8. Initial Welcome Message and Action Choice ---
 if not st.session_state.messages and st.session_state.selected_action is None:
     st.session_state.messages.append({"role": "assistant", "content": "Olá! Bem-vindo ao Analisador de Recrutamento. O que gostaria de fazer?"})
     with st.chat_message("assistant"):
@@ -243,7 +274,7 @@ if not st.session_state.messages and st.session_state.selected_action is None:
         if st.button("📝 Analisar CV(s)", use_container_width=True):
             st.session_state.selected_action = 'analyze_cv'
             st.session_state.messages.append({"role": "user", "content": "Quero analisar CV(s)."})
-            st.session_state.messages.append({"role": "assistant", "content": "Ok! Por favor, faça o upload de até 5 CVs na barra lateral e forneça a descrição da vaga na área principal."})
+            st.session_state.messages.append({"role": "assistant", "content": "Ok! Por favor, faça o upload de até 5 CVs na barra lateral e **selecione a vaga desejada**."})
             st.experimental_rerun()
     with col2:
         if st.button("❓ Tirar uma dúvida", use_container_width=True):
@@ -252,7 +283,7 @@ if not st.session_state.messages and st.session_state.selected_action is None:
             st.session_state.messages.append({"role": "assistant", "content": "Certo! Pergunte o que quiser."})
             st.experimental_rerun()
 
-# --- 8. Display Chat History ---
+# --- 9. Display Chat History ---
 for message in st.session_state.messages:
     if message["role"] == "user":
         with st.chat_message("user"):
@@ -261,10 +292,9 @@ for message in st.session_state.messages:
         with st.chat_message("assistant"):
             st.markdown(message["content"])
 
-# --- 9. Conditional UI for CV Analysis (Multiple Files) ---
+# --- 10. Conditional UI for CV Analysis (Multiple Files + Job Selection) ---
 if st.session_state.selected_action == 'analyze_cv':
     st.sidebar.header("Upload de CVs")
-    # Multi-file uploader
     uploaded_files = st.sidebar.file_uploader(
         "Escolha arquivos PDF ou DOCX (até 5 CVs)",
         type=["pdf", "docx"],
@@ -272,18 +302,15 @@ if st.session_state.selected_action == 'analyze_cv':
         key="cv_uploader"
     )
 
-    # Process CV uploads
     if uploaded_files:
         if len(uploaded_files) > 5:
             st.sidebar.warning("Por favor, selecione no máximo 5 CVs.")
-            uploaded_files = uploaded_files[:5] # Limit to first 5
+            uploaded_files = uploaded_files[:5]
 
-        # Only process new files or if no files were processed yet
         current_uploaded_names = {f.name for f in uploaded_files}
-        # Check if the set of uploaded files has changed
         if current_uploaded_names != set(st.session_state.uploaded_cvs_data.keys()):
-            st.session_state.uploaded_cvs_data = {} # Clear previous data if files change
-            st.session_state.analysis_results = [] # Clear previous results
+            st.session_state.uploaded_cvs_data = {}
+            st.session_state.analysis_results = []
 
             for uploaded_file in uploaded_files:
                 with st.sidebar.spinner(f"Lendo CV: {uploaded_file.name}..."):
@@ -294,7 +321,6 @@ if st.session_state.selected_action == 'analyze_cv':
                     else:
                         st.sidebar.error(f"Não foi possível ler o CV: {uploaded_file.name}")
 
-    # Display list of currently loaded CVs
     if st.session_state.uploaded_cvs_data:
         st.sidebar.subheader("CVs Carregados:")
         for name in st.session_state.uploaded_cvs_data.keys():
@@ -303,20 +329,50 @@ if st.session_state.selected_action == 'analyze_cv':
         st.sidebar.info("Nenhum CV carregado ainda.")
 
 
+    st.subheader("Escolha a Vaga ou Cole a Descrição")
+
+    # Get job titles for selectbox
+    job_titles = ["Selecionar uma vaga"] + [job["titulo"] for job in st.session_state.job_list]
+
+    # Selectbox for job titles
+    selected_job_title = st.selectbox(
+        "Selecione uma vaga da lista:",
+        options=job_titles,
+        key="job_title_selector",
+        index=job_titles.index(st.session_state.selected_job_title) if st.session_state.selected_job_title in job_titles else 0
+    )
+
+    # Update session state with selected title
+    st.session_state.selected_job_title = selected_job_title
+
+    # Update job description based on selection
+    if selected_job_title != "Selecionar uma vaga":
+        for job in st.session_state.job_list:
+            if job["titulo"] == selected_job_title:
+                st.session_state.job_description = job["descricao"]
+                break
+    else:
+        # If "Selecionar uma vaga" is chosen, allow manual input or clear if previously selected
+        if st.session_state.job_description and st.session_state.selected_job_title == "Selecionar uma vaga":
+            pass # Keep current job_description if user typed it
+        else:
+            st.session_state.job_description = "" # Clear if it was from a previous selection
+
+    # Text area for manual input or displaying selected job description
     st.text_area(
-        "Descrição da Vaga",
+        "Descrição da Vaga (auto-preenchido ou cole aqui)",
         key="job_description_input",
         value=st.session_state.job_description,
         height=200,
-        help="Cole aqui a descrição detalhada da vaga para comparar com os CVs."
+        help="A descrição da vaga será auto-preenchida ao selecionar uma vaga. Você também pode colar uma descrição aqui."
     )
+    # Update job_description session state if user manually edits the text_area
     st.session_state.job_description = st.session_state.job_description_input
 
-    # Trigger analysis if CVs and JD are present and no analysis has been run yet
-    # Or allow re-run if JD changes
+
     if st.session_state.uploaded_cvs_data and st.session_state.job_description:
         if st.button("✨ Analisar Correspondência dos CVs", type="primary"):
-            st.session_state.analysis_results = [] # Clear previous results for a fresh run
+            st.session_state.analysis_results = []
             with st.spinner("Calculando correspondências e gerando análises..."):
                 for cv_name, cv_text in st.session_state.uploaded_cvs_data.items():
                     if not cv_text:
@@ -329,7 +385,6 @@ if st.session_state.selected_action == 'analyze_cv':
 
                     similarity_score = calculate_cosine_similarity(cv_text, st.session_state.job_description) * 100
 
-                    # Formulate a prompt for Gemini for EACH CV
                     analysis_prompt = (
                         f"Você é um analista de recrutamento. A pontuação de similaridade entre o CV de '{cv_name}' "
                         f"e a Descrição da Vaga é de {similarity_score:.2f}%. "
@@ -353,20 +408,18 @@ if st.session_state.selected_action == 'analyze_cv':
                         "analysis": ai_analysis
                     })
 
-                # Sort results by score in descending order for ranking
                 st.session_state.analysis_results.sort(key=lambda x: x["score"], reverse=True)
 
-                # Add the ranking and individual analyses to messages
                 ranking_message = "### Resultados da Análise de CVs (Ranking)\n\n"
                 for i, result in enumerate(st.session_state.analysis_results):
                     ranking_message += f"**{i+1}. {result['name']}** (Score: {result['score']:.2f}%)\n"
                     ranking_message += f"**Análise:**\n{result['analysis']}\n\n"
-                    ranking_message += "---\n\n" # Separator
+                    ranking_message += "---\n\n"
 
                 st.session_state.messages.append({"role": "assistant", "content": ranking_message})
-                st.experimental_rerun() # Rerun to update display
+                st.experimental_rerun()
 
-# --- 10. General Chat Input (for "Tirar uma dúvida" or follow-ups) ---
+# --- 11. General Chat Input (for "Tirar uma dúvida" or follow-ups) ---
 elif st.session_state.selected_action == 'ask_question':
     prompt = st.chat_input("Pergunte o que quiser...")
     if prompt:
@@ -388,11 +441,13 @@ elif st.session_state.selected_action == 'ask_question':
                     st.error(ai_response)
         st.session_state.messages.append({"role": "assistant", "content": ai_response})
 
-# --- 11. Clear Chat / Reset Options ---
+# --- 12. Clear Chat / Reset Options ---
 if st.button("🏠 Início / Limpar Conversa"):
     st.session_state.messages = []
     st.session_state.selected_action = None
     st.session_state.uploaded_cvs_data = {}
     st.session_state.job_description = ""
     st.session_state.analysis_results = []
+    st.session_state.job_list = [] # Reset job list so it's reloaded
+    st.session_state.selected_job_title = "Selecionar uma vaga"
     st.experimental_rerun()

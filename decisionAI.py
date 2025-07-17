@@ -255,7 +255,22 @@ def load_job_descriptions(json_path="vagas.json"):
         vagas_list = []
         for job_id, v in jobs.items():
             info = v.get('informacoes_basicas', {})
-            vagas_list.append(f"{job_id} - {info.get('titulo_vaga', '')}")
+            profile = v.get('perfil_vaga', {})
+            job_text = ' '.join([
+                info.get('titulo_vaga', '') or '',
+                info.get('objetivo_vaga', '') or '',
+                profile.get('nivel profissional'),
+                profile.get('areas_atuacao') or '',
+                profile.get('principais_atividades') or '',
+                profile.get('competencia_tecnicas_e_comportamentais') or '',
+                profile.get('habilidades_comportamentais_necessarias') or '',
+                profile.get('demais_observacoes') or ''
+        
+            ])
+            vagas_list.append({'job_id': job_id,
+                                'titulo':f"{job_id} - {info.get('titulo_vaga', '')}",
+                               'job_text': job_text
+                              })
         return vagas_list
     except FileNotFoundError:
         st.error(f"Erro: Arquivo '{json_path}' não encontrado. Por favor, verifique o caminho.")

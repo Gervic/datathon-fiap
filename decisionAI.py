@@ -337,7 +337,7 @@ if st.session_state.selected_action == 'analyze_cv':
             st.session_state.analysis_results = []
 
             for uploaded_file in uploaded_files:
-                with st.sidebar.spinner(f"Lendo CV: {uploaded_file.name}..."):
+                with st.spinner(f"Lendo CV: {uploaded_file.name}..."):
                     extracted_text = get_text_from_file(uploaded_file)
                     if extracted_text:
                         st.session_state.uploaded_cvs_data[uploaded_file.name] = extracted_text

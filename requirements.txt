@@ -1,0 +1,9 @@
+streamlit
+pdfminer.six
+sentence-transformers
+scikit-learn
+google-generativeai
+python-dotenv
+PyPDF2
+pypdf==3.17.4
+python-docx==1.1.0

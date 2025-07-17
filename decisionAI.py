@@ -7,18 +7,15 @@ from PyPDF2 import PdfReader
 from docx import Document
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import joblib # Importar joblib para carregar scaler e modelo ML
+import gzip
+from sentence_transformers import SentenceTransformer # Importar o modelo de embedding
 import io
 import json 
+import numpy as np
 
 st.set_page_config(page_title="Decision AI Assistant ", page_icon="🤖", layout="wide")
 st.title("Bem vindo ao Decision AI, nosso assistente de recrutamento")
-
-# Load API key from .env
-load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
-# Initialize Gemini model
-model = genai.GenerativeModel("gemini-1.5-flash")
 
 particles_js = """<!DOCTYPE html>
 <html lang="en">
@@ -164,8 +161,22 @@ particles_js = """<!DOCTYPE html>
 </body>
 </html>
 """
-  
-# --- 3. Initialize Session State Variables ---
+
+# Securely Load API Key 
+gemini_api_key = st.secrets.get("GEMINI_API_KEY")
+if gemini_api_key is None:
+    load_dotenv()
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+
+if gemini_api_key is None:
+    st.error("Gemini API key not found. Please set it in Streamlit Cloud secrets or in a local .env file.")
+    st.info("Get your key from: https://aistudio.google.com/app/apikey")
+    st.stop()
+
+genai.configure(api_key=gemini_api_key)
+model_gemini = genai.GenerativeModel("gemini-2.5-flash-lite-preview-06-17") 
+
+# Initialize Session State Variables
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -179,22 +190,59 @@ if "job_description" not in st.session_state:
     st.session_state.job_description = ""
 
 if "analysis_results" not in st.session_state:
-    st.session_state.analysis_results = [] # Stores list of dicts: {name, score, analysis}
+    st.session_state.analysis_results = [] # Stores list of dicts: {name, score, analysis, prediction_proba, recommended}
 
 if "job_list" not in st.session_state:
-    st.session_state.job_list = [] # Stores the parsed job data from vagas.json
+    st.session_state.job_list = []
 
 if "selected_job_title" not in st.session_state:
-    st.session_state.selected_job_title = "Selecionar uma vaga" # Default option for selectbox
-  
+    st.session_state.selected_job_title = "Selecionar uma vaga"
+
 if "show_animation" not in st.session_state:
     st.session_state.show_animation = True
 
 if st.session_state.show_animation:
     components.html(particles_js, height=370, scrolling=False)
 
+# Loading ML Models and Data (Cached) 
+@st.cache_resource # Caching the model loading, runs only once
+def load_ml_models():
+    try:
+        # Load SentenceTransformer model
+        sbert_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2') 
 
-# --- 4. Helper Functions for Text Extraction ---
+        with gzip.open('resume_matching_model_2.pkl.gz', 'rb') as f:
+          dat = joblib.load(f)
+      
+        # Load StandardScaler
+        scaler = dat['scaler'] 
+        
+        # Load RandomForestClassifier model
+        clf_model = dat['model'] 
+        
+        # Load ideal employee embeddings
+        with open('job_ideal_embeddings.json', 'r') as f:
+            job_ideal_embeds_json = json.load(f)
+        
+        # Convert list back to numpy arrays
+        job_ideal_embeds = {
+            job_id: np.array(embedding)
+            for job_id, embedding in job_ideal_embeds_json.items()
+        }
+        
+        return sbert_model, scaler, clf_model, job_ideal_embeds
+    except FileNotFoundError as e:
+        st.error(f"Erro ao carregar arquivos de modelo: {e}. Certifique-se de que 'scaler.pkl', 'random_forest_model.pkl' e 'job_ideal_embeddings.json' estão no diretório raiz do seu projeto.")
+        st.stop()
+    except Exception as e:
+        st.error(f"Erro inesperado ao carregar modelos: {e}")
+        st.stop()
+
+# Load all models and data upfront
+sbert_model, scaler, clf_model, job_ideal_embeds = load_ml_models()
+
+
+#Functions for Text Extraction 
 def extract_text_from_pdf(file):
     reader = PdfReader(file)
     text = ""
@@ -225,16 +273,22 @@ def get_text_from_file(uploaded_file):
         return None
     return text
 
-# --- 5. Helper for Cosine Similarity ---
-def calculate_cosine_similarity(text1, text2):
-    if not text1 or not text2:
+# Function for Cosine Similarity (using SBERT embeddings)
+# This function takes embeddings, not raw text
+def calculate_cosine_similarity_embeddings(embed1, embed2):
+    # Ensuring embeddings are 2D arrays for sklearn's cosine_similarity
+    if embed1.ndim == 1:
+        embed1 = embed1.reshape(1, -1)
+    if embed2.ndim == 1:
+        embed2 = embed2.reshape(1, -1)
+    
+    if embed1.shape[1] != embed2.shape[1]:
+        st.error("Dimensões dos embeddings não correspondem.")
         return 0.0
-    documents = [text1, text2]
-    vectorizer = TfidfVectorizer().fit_transform(documents)
-    cosine_sim = cosine_similarity(vectorizer[0:1], vectorizer[1:2]).flatten()[0]
-    return cosine_sim
+    
+    return cosine_similarity(embed1, embed2)[0][0]
 
-# --- 6. Helper for Gemini Chat History Formatting ---
+# Function for Gemini Chat History Formatting
 def to_gemini_history(streamlit_messages):
     gemini_format = []
     for msg in streamlit_messages:
@@ -245,36 +299,13 @@ def to_gemini_history(streamlit_messages):
         })
     return gemini_format
 
-# --- 7. Load Job Descriptions from JSON ---
-# This function will be called once per session or on app reload
-@st.cache_data # Cache the data to avoid re-reading the file on every rerun
+#Loading Job Descriptions from JSON 
+@st.cache_data
 def load_job_descriptions(json_path="vagas.json"):
     try:
         with open(json_path, "r", encoding="utf-8") as f:
             jobs = json.load(f)
-        vagas_list = []
-        seen = set()
-        for job_id, v in jobs.items():
-            info = v.get('informacoes_basicas', {})
-            profile = v.get('perfil_vaga', {})
-            job_text = ' '.join([
-                info.get('titulo_vaga', '') or '',
-                info.get('objetivo_vaga', '') or '',
-                profile.get('nivel profissional'),
-                profile.get('areas_atuacao') or '',
-                profile.get('principais_atividades') or '',
-                profile.get('competencia_tecnicas_e_comportamentais') or '',
-                profile.get('habilidades_comportamentais_necessarias') or '',
-                profile.get('demais_observacoes') or ''
-        
-            ])
-            if job_id not in seen:
-              seen.add(job_id)
-              vagas_list.append({'job_id': job_id,
-                                  'titulo':f"{job_id} - {info.get('titulo_vaga', '')}",
-                                 'descricao': job_text
-                                })
-        return vagas_list
+        return jobs
     except FileNotFoundError:
         st.error(f"Erro: Arquivo '{json_path}' não encontrado. Por favor, verifique o caminho.")
         return []
@@ -282,14 +313,13 @@ def load_job_descriptions(json_path="vagas.json"):
         st.error(f"Erro: Não foi possível ler '{json_path}'. Verifique o formato do JSON.")
         return []
 
-# Load jobs when the app starts
 if not st.session_state.job_list:
     st.session_state.job_list = load_job_descriptions()
 
 
-# --- 8. Initial Welcome Message and Action Choice ---
+# Initial Welcome Message and Action Choice
 if not st.session_state.messages and st.session_state.selected_action is None:
-    st.session_state.messages.append({"role": "assistant", "content": "Olá! Bem-vindo ao Analisador de Recrutamento. O que gostaria de fazer?"})
+    st.session_state.messages.append({"role": "assistant", "content": "Olá! Bem-vindo ao DecisionAI, o hub inteligente de recrutamento. O que gostaria de fazer?"})
     with st.chat_message("assistant"):
         st.markdown(st.session_state.messages[0]["content"])
 
@@ -299,15 +329,15 @@ if not st.session_state.messages and st.session_state.selected_action is None:
             st.session_state.selected_action = 'analyze_cv'
             st.session_state.messages.append({"role": "user", "content": "Quero analisar CV(s)."})
             st.session_state.messages.append({"role": "assistant", "content": "Ok! Por favor, faça o upload de até 5 CVs na barra lateral e **selecione a vaga desejada**."})
-            st.rerun()
+            st.rerun() 
     with col2:
         if st.button("❓ Tirar uma dúvida", use_container_width=True):
             st.session_state.selected_action = 'ask_question'
             st.session_state.messages.append({"role": "user", "content": "Quero tirar uma dúvida."})
             st.session_state.messages.append({"role": "assistant", "content": "Certo! Pergunte o que quiser."})
-            st.rerun()
+            st.rerun() 
 
-# --- 9. Display Chat History ---
+#Display Chat History
 for message in st.session_state.messages:
     if message["role"] == "user":
         with st.chat_message("user"):
@@ -316,7 +346,7 @@ for message in st.session_state.messages:
         with st.chat_message("assistant"):
             st.markdown(message["content"])
 
-# --- 10. Conditional UI for CV Analysis (Multiple Files + Job Selection) ---
+#Conditional UI for CV Analysis (Multiple Files + Job Selection)
 if st.session_state.selected_action == 'analyze_cv':
     st.sidebar.header("Upload de CVs")
     uploaded_files = st.sidebar.file_uploader(
@@ -337,7 +367,7 @@ if st.session_state.selected_action == 'analyze_cv':
             st.session_state.analysis_results = []
 
             for uploaded_file in uploaded_files:
-                with st.spinner(f"Lendo CV: {uploaded_file.name}..."):
+                with st.sidebar.spinner(f"Lendo CV: {uploaded_file.name}..."):
                     extracted_text = get_text_from_file(uploaded_file)
                     if extracted_text:
                         st.session_state.uploaded_cvs_data[uploaded_file.name] = extracted_text
@@ -355,10 +385,8 @@ if st.session_state.selected_action == 'analyze_cv':
 
     st.subheader("Escolha a Vaga ou Cole a Descrição")
 
-    # Get job titles for selectbox
     job_titles = ["Selecionar uma vaga"] + [job["titulo"] for job in st.session_state.job_list]
 
-    # Selectbox for job titles
     selected_job_title = st.selectbox(
         "Selecione uma vaga da lista:",
         options=job_titles,
@@ -366,23 +394,23 @@ if st.session_state.selected_action == 'analyze_cv':
         index=job_titles.index(st.session_state.selected_job_title) if st.session_state.selected_job_title in job_titles else 0
     )
 
-    # Update session state with selected title
     st.session_state.selected_job_title = selected_job_title
 
-    # Update job description based on selection
+    job_id_selected = None # Initialize job_id for the selected job description
     if selected_job_title != "Selecionar uma vaga":
         for job in st.session_state.job_list:
             if job["titulo"] == selected_job_title:
                 st.session_state.job_description = job["descricao"]
+                job_id_selected = job.get("job_id") # Assuming 'job_id' key exists in vagas.json
+                if job_id_selected is None:
+                    st.warning("Job ID não encontrado para a vaga selecionada. A similaridade com o perfil ideal não será calculada.")
                 break
     else:
-        # If "Selecionar uma vaga" is chosen, allow manual input or clear if previously selected
         if st.session_state.job_description and st.session_state.selected_job_title == "Selecionar uma vaga":
-            pass # Keep current job_description if user typed it
+            pass
         else:
-            st.session_state.job_description = "" # Clear if it was from a previous selection
+            st.session_state.job_description = ""
 
-    # Text area for manual input or displaying selected job description
     st.text_area(
         "Descrição da Vaga (auto-preenchido ou cole aqui)",
         key="job_description_input",
@@ -390,7 +418,6 @@ if st.session_state.selected_action == 'analyze_cv':
         height=200,
         help="A descrição da vaga será auto-preenchida ao selecionar uma vaga. Você também pode colar uma descrição aqui."
     )
-    # Update job_description session state if user manually edits the text_area
     st.session_state.job_description = st.session_state.job_description_input
 
 
@@ -398,52 +425,95 @@ if st.session_state.selected_action == 'analyze_cv':
         if st.button("✨ Analisar Correspondência dos CVs", type="primary"):
             st.session_state.analysis_results = []
             with st.spinner("Calculando correspondências e gerando análises..."):
+                # Embed job description once
+                job_desc_embedding = sbert_model.encode(st.session_state.job_description)
+              
                 for cv_name, cv_text in st.session_state.uploaded_cvs_data.items():
                     if not cv_text:
                         st.session_state.analysis_results.append({
                             "name": cv_name,
                             "score": 0.0,
-                            "analysis": "Não foi possível extrair texto deste CV."
+                            "analysis": "Não foi possível extrair texto deste CV.",
+                            "prediction_proba": 0.0,
+                            "recommended": False
                         })
                         continue
 
-                    similarity_score = calculate_cosine_similarity(cv_text, st.session_state.job_description) * 100
+                    # Generate CV embedding
+                    cv_embedding = sbert_model.encode(cv_text)
 
+                    # Calculate cosine similarity to job description
+                    cosine_to_job = calculate_cosine_similarity_embeddings(cv_embedding, job_desc_embedding) * 100
+
+                    # Calculate cosine similarity to ideal employee profile
+                    cosine_to_ideal = 0.0
+                    if job_id_selected and job_id_selected in job_ideal_embeds:
+                        ideal_embedding = job_ideal_embeds[job_id_selected]
+                        cosine_to_ideal = calculate_cosine_similarity_embeddings(cv_embedding, ideal_embedding) * 100
+                    elif job_id_selected:
+                        st.warning(f"Embedding do perfil ideal não encontrado para Job ID: {job_id_selected} (CV: {cv_name}). A similaridade com o perfil ideal não será calculada para este CV.")
+
+                    # Prepare features for the ML model
+                    features = np.array([[cosine_to_job, cosine_to_ideal]])
+                    features_scaled = scaler.transform(features) # Transform with the loaded scaler
+
+                    # Get prediction probability from the ML model
+                    prediction_proba = clf_model.predict_proba(features_scaled)[0][1] * 100 # Probability of being hired
+
+                    # Determine recommendation based on a threshold (e.g., > 50%)
+                    recommended = prediction_proba >= 70 # You can adjust this threshold
+
+                    # Formulate prompt for Gemini, including ML prediction
                     analysis_prompt = (
-                        f"Você é um analista de recrutamento. A pontuação de similaridade entre o CV de '{cv_name}' "
-                        f"e a Descrição da Vaga é de {similarity_score:.2f}%. "
-                        f"\n\n--- Texto do CV: {cv_name} ---\n{cv_text}\n\n"
-                        f"--- Descrição da Vaga ---\n{st.session_state.job_description}\n\n"
-                        f"Com base nesta pontuação e nos textos fornecidos, "
+                        f"Você é um analista de recrutamento. A análise a seguir é para o CV de '{cv_name}' "
+                        f"em relação à vaga com a descrição: '{st.session_state.job_description}'.\n\n"
+                        f"**Métricas:**\n"
+                        f"- Similaridade com a Descrição da Vaga (TF-IDF Cosine): {cosine_to_job:.2f}%\n"
+                        f"- Similaridade com o Perfil de Funcionário Ideal (Embeddings Cosine): {cosine_to_ideal:.2f}%\n"
+                        f"- **Probabilidade de Contratação (Modelo ML): {prediction_proba:.2f}%**\n\n"
+                        f"--- Texto do CV: {cv_name} ---\n{cv_text}\n\n"
+                        f"Com base nessas métricas e nos textos fornecidos, "
                         f"analise os pontos fortes e fracos do candidato em relação à vaga. "
                         f"Seja objetivo e profissional, e sugira áreas onde o CV poderia ser melhorado para a vaga. "
-                        f"Formate a resposta com os seguintes tópicos: 'Pontos Fortes', 'Pontos a Melhorar', 'Recomendação Geral'. "
-                        f"Mantenha a análise concisa, no máximo 3 parágrafos."
+                        f"Inclua explicitamente a recomendação do modelo ML no final, informando se o candidato é 'Recomendado para Entrevista' ou 'Não Recomendado no momento' baseado na probabilidade de contratação.\n"
+                        f"Formate a resposta com os seguintes tópicos: 'Pontos Fortes', 'Pontos a Melhorar', 'Recomendação Final do Modelo'."
                     )
                     try:
-                        response = model.generate_content(analysis_prompt)
+                        response = model_gemini.generate_content(analysis_prompt)
                         ai_analysis = response.text
                     except Exception as e:
                         ai_analysis = f"Ocorreu um erro ao gerar a análise para '{cv_name}': {e}"
 
                     st.session_state.analysis_results.append({
                         "name": cv_name,
-                        "score": similarity_score,
+                        "score": cosine_to_job, 
+                        "cosine_to_job": cosine_to_job,
+                        "cosine_to_ideal": cosine_to_ideal,
+                        "prediction_proba": prediction_proba,
+                        "recommended": recommended,
                         "analysis": ai_analysis
                     })
 
-                st.session_state.analysis_results.sort(key=lambda x: x["score"], reverse=True)
+                # Sorting results by ML prediction probability in descending order
+                st.session_state.analysis_results.sort(key=lambda x: x["prediction_proba"], reverse=True)
 
-                ranking_message = "### Resultados da Análise de CVs (Ranking)\n\n"
+                ranking_message = "### Resultados da Análise de CVs (Ranking por Probabilidade de Contratação)\n\n"
                 for i, result in enumerate(st.session_state.analysis_results):
-                    ranking_message += f"**{i+1}. {result['name']}** (Score: {result['score']:.2f}%)\n"
-                    ranking_message += f"**Análise:**\n{result['analysis']}\n\n"
-                    ranking_message += "---\n\n"
+                    recommendation_text = "🟢 **Recomendado para Entrevista**" if result['recommended'] else "🔴 **Não Recomendado no momento**"
+                    ranking_message += (
+                        f"**{i+1}. {result['name']}**\n"
+                        f"- Probabilidade de Contratação (Modelo ML): {result['prediction_proba']:.2f}%\n"
+                        f"- Similaridade com a Vaga (TF-IDF): {result['cosine_to_job']:.2f}%\n"
+                        f"- Similaridade com o Perfil Ideal (Embeddings): {result['cosine_to_ideal']:.2f}%\n"
+                        f"- Status: {recommendation_text}\n"
+                        f"**Análise Detalhada:**\n{result['analysis']}\n\n"
+                        f"---\n\n" 
+                    )
 
                 st.session_state.messages.append({"role": "assistant", "content": ranking_message})
-                st.rerun()
+                st.rerun() 
 
-# --- 11. General Chat Input (for "Tirar uma dúvida" or follow-ups) ---
+#General Chat Input (for "Tirar uma dúvida" or follow-ups)
 elif st.session_state.selected_action == 'ask_question':
     prompt = st.chat_input("Pergunte o que quiser...")
     if prompt:
@@ -456,7 +526,7 @@ elif st.session_state.selected_action == 'ask_question':
         with st.chat_message("assistant"):
             with st.spinner("Pensando..."):
                 try:
-                    chat_session = model.start_chat(history=gemini_chat_history)
+                    chat_session = model_gemini.start_chat(history=gemini_chat_history)
                     response = chat_session.send_message(prompt)
                     ai_response = response.text
                     st.markdown(ai_response)
@@ -465,13 +535,13 @@ elif st.session_state.selected_action == 'ask_question':
                     st.error(ai_response)
         st.session_state.messages.append({"role": "assistant", "content": ai_response})
 
-# --- 12. Clear Chat / Reset Options ---
+# Clear Chat / Reset Options
 if st.button("🏠 Início / Limpar Conversa"):
     st.session_state.messages = []
     st.session_state.selected_action = None
     st.session_state.uploaded_cvs_data = {}
     st.session_state.job_description = ""
     st.session_state.analysis_results = []
-    st.session_state.job_list = [] # Reset job list so it's reloaded
+    st.session_state.job_list = []
     st.session_state.selected_job_title = "Selecionar uma vaga"
-    st.rerun()
+    st.rerun() 

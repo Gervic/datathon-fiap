@@ -296,13 +296,13 @@ if not st.session_state.messages and st.session_state.selected_action is None:
             st.session_state.selected_action = 'analyze_cv'
             st.session_state.messages.append({"role": "user", "content": "Quero analisar CV(s)."})
             st.session_state.messages.append({"role": "assistant", "content": "Ok! Por favor, faça o upload de até 5 CVs na barra lateral e **selecione a vaga desejada**."})
-            st.experimental_rerun()
+            st.rerun()
     with col2:
         if st.button("❓ Tirar uma dúvida", use_container_width=True):
             st.session_state.selected_action = 'ask_question'
             st.session_state.messages.append({"role": "user", "content": "Quero tirar uma dúvida."})
             st.session_state.messages.append({"role": "assistant", "content": "Certo! Pergunte o que quiser."})
-            st.experimental_rerun()
+            st.rerun()
 
 # --- 9. Display Chat History ---
 for message in st.session_state.messages:
@@ -438,7 +438,7 @@ if st.session_state.selected_action == 'analyze_cv':
                     ranking_message += "---\n\n"
 
                 st.session_state.messages.append({"role": "assistant", "content": ranking_message})
-                st.experimental_rerun()
+                st.rerun()
 
 # --- 11. General Chat Input (for "Tirar uma dúvida" or follow-ups) ---
 elif st.session_state.selected_action == 'ask_question':
@@ -471,4 +471,4 @@ if st.button("🏠 Início / Limpar Conversa"):
     st.session_state.analysis_results = []
     st.session_state.job_list = [] # Reset job list so it's reloaded
     st.session_state.selected_job_title = "Selecionar uma vaga"
-    st.experimental_rerun()
+    st.rerun()

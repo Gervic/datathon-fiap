@@ -8,6 +8,7 @@ from docx import Document
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import io
+import json 
 
 st.set_page_config(page_title="Decision AI Assistant ", page_icon="🤖", layout="centered")
 st.title("Bem vindo ao Decision AI, nosso assistente de recrutamento")
@@ -251,7 +252,11 @@ def load_job_descriptions(json_path="vagas.json"):
     try:
         with open(json_path, "r", encoding="utf-8") as f:
             jobs = json.load(f)
-        return jobs
+        vagas_list = []
+        for job_id, v in jobs.items():
+            info = v.get('informacoes_basicas', {})
+            vagas_list.append(f"{job_id} - {info.get('titulo_vaga', '')}")
+        return vagas_list
     except FileNotFoundError:
         st.error(f"Erro: Arquivo '{json_path}' não encontrado. Por favor, verifique o caminho.")
         return []

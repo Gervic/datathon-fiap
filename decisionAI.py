@@ -393,9 +393,6 @@ for message in st.session_state.messages:
     if message["role"] == "user":
         with st.chat_message("user"):
             st.markdown(message["content"])
-    elif message["role"] == "assistant":
-        with st.chat_message("assistant", avatar='3d-ai-assistant-icon.avif'):
-            st.markdown(message["content"])
 
 #Conditional UI for CV Analysis (Multiple Files + Job Selection)
 if st.session_state.selected_action == 'analyze_cv':

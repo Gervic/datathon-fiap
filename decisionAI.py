@@ -30,7 +30,7 @@ def set_dark_mode():
 st.set_page_config(page_title="Decision AI Assistant ", page_icon="🤖", layout="wide")
 st.title("Bem vindo ao Decision AI, nosso assistente de recrutamento")
 
-#st.sidebar.header('HR Analytics')
+st.sidebar.header('DecisionAI Hub')
 st.sidebar.image("AI motion.gif", use_container_width=True)
 st.sidebar.subheader("Configurações")
 theme = st.sidebar.selectbox("Tema", ["Escuro", "Claro"], index=0)
@@ -371,7 +371,7 @@ if not st.session_state.job_list:
 # Initial Welcome Message and Action Choice
 if not st.session_state.messages and st.session_state.selected_action is None:
     st.session_state.messages.append({"role": "assistant", "content": "Olá! Bem-vindo ao DecisionAI, o hub inteligente de recrutamento. O que gostaria de fazer?"})
-    with st.chat_message("assistant", avatar= 'Voice assistant motion effect.gif'):
+    with st.chat_message("assistant", avatar= '3d-ai-assistant-icon.avif'):
         st.markdown(st.session_state.messages[0]["content"])
 
     col1, col2 = st.columns(2)
@@ -394,7 +394,7 @@ for message in st.session_state.messages:
         with st.chat_message("user"):
             st.markdown(message["content"])
     elif message["role"] == "assistant":
-        with st.chat_message("assistant", avatar='Voice assistant motion effect.gif'):
+        with st.chat_message("assistant", avatar='3d-ai-assistant-icon.avif'):
             st.markdown(message["content"])
 
 #Conditional UI for CV Analysis (Multiple Files + Job Selection)

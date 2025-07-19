@@ -11,6 +11,7 @@ import joblib # Importar joblib para carregar scaler e modelo ML
 import gzip
 import io
 import json 
+import joblib
 import numpy as np
 
 def set_dark_mode():

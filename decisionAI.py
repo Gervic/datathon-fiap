@@ -20,9 +20,6 @@ def set_dark_mode():
                 background-color: #000000;
                 color: #ffffff;
             }
-            h1, h2, h3, h4, h5, h6, p, span, div {
-                color: #ffffff;
-            }
             section[data-testid="stSidebar"] {
                 background-color: #111;
                 color: white;

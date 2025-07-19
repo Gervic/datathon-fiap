@@ -32,7 +32,7 @@ st.title("Bem vindo ao Decision AI, nosso assistente de recrutamento")
 
 st.sidebar.title('DecisionAI Hub')
 st.sidebar.image("AI motion.gif", use_container_width=True)
-st.sidebar.header("Configurações")
+st.sidebar.subheader("Configurações")
 theme = st.sidebar.selectbox("Tema", ["Escuro", "Claro"], index=0)
 if theme == "Escuro":
     set_dark_mode()
@@ -396,40 +396,40 @@ for message in st.session_state.messages:
 
 #Conditional UI for CV Analysis (Multiple Files + Job Selection)
 if st.session_state.selected_action == 'analyze_cv':
-    st.sidebar.header("Upload de CVs")
-    uploaded_files = st.sidebar.file_uploader(
-        "Escolha arquivos PDF ou DOCX (até 5 CVs)",
-        type=["pdf", "docx"],
-        accept_multiple_files=True,
-        key="cv_uploader"
-    )
-
-    if uploaded_files:
-        if len(uploaded_files) > 5:
-            st.sidebar.warning("Por favor, selecione no máximo 5 CVs.")
-            uploaded_files = uploaded_files[:5]
-
-        current_uploaded_names = {f.name for f in uploaded_files}
-        if current_uploaded_names != set(st.session_state.uploaded_cvs_data.keys()):
-            st.session_state.uploaded_cvs_data = {}
-            st.session_state.analysis_results = []
-
-            for uploaded_file in uploaded_files:
-                with st.sidebar.spinner(f"Lendo CV: {uploaded_file.name}..."):
-                    extracted_text = get_text_from_file(uploaded_file)
-                    if extracted_text:
-                        st.session_state.uploaded_cvs_data[uploaded_file.name] = extracted_text
-                        st.sidebar.success(f"CV '{uploaded_file.name}' lido com sucesso!")
-                    else:
-                        st.sidebar.error(f"Não foi possível ler o CV: {uploaded_file.name}")
-
-    if st.session_state.uploaded_cvs_data:
-        st.sidebar.subheader("CVs Carregados:")
-        for name in st.session_state.uploaded_cvs_data.keys():
-            st.sidebar.write(f"- {name}")
-    else:
-        st.sidebar.info("Nenhum CV carregado ainda.")
-
+    with st.spinner("Esperando o upload dos CVs"):
+        st.sidebar.header("Upload de CVs")
+        uploaded_files = st.sidebar.file_uploader(
+            "Escolha arquivos PDF ou DOCX (até 5 CVs)",
+            type=["pdf", "docx"],
+            accept_multiple_files=True,
+            key="cv_uploader"
+        )
+    
+        if uploaded_files:
+            if len(uploaded_files) > 5:
+                st.sidebar.warning("Por favor, selecione no máximo 5 CVs.")
+                uploaded_files = uploaded_files[:5]
+    
+            current_uploaded_names = {f.name for f in uploaded_files}
+            if current_uploaded_names != set(st.session_state.uploaded_cvs_data.keys()):
+                st.session_state.uploaded_cvs_data = {}
+                st.session_state.analysis_results = []
+    
+                for uploaded_file in uploaded_files:
+                    with st.sidebar.spinner(f"Lendo CV: {uploaded_file.name}..."):
+                        extracted_text = get_text_from_file(uploaded_file)
+                        if extracted_text:
+                            st.session_state.uploaded_cvs_data[uploaded_file.name] = extracted_text
+                            st.sidebar.success(f"CV '{uploaded_file.name}' lido com sucesso!")
+                        else:
+                            st.sidebar.error(f"Não foi possível ler o CV: {uploaded_file.name}")
+    
+        if st.session_state.uploaded_cvs_data:
+            st.sidebar.subheader("CVs Carregados:")
+            for name in st.session_state.uploaded_cvs_data.keys():
+                st.sidebar.write(f"- {name}")
+        else:
+            st.sidebar.info("Nenhum CV carregado ainda.")
 
     st.subheader("Escolha a Vaga ou Cole a Descrição")
 

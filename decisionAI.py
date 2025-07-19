@@ -13,6 +13,39 @@ import io
 import json 
 import numpy as np
 
+def set_dark_mode():
+    st.markdown("""
+        <style>
+            .stApp {
+                background-color: #000000;
+                color: #ffffff;
+            }
+            h1, h2, h3, h4, h5, h6, p, span, div {
+                color: #ffffff;
+            }
+            .stButton>button {
+                background-color: #1f1f1f;
+                color: white;
+                border: 1px solid #ffffff33;
+                border-radius: 6px;
+                padding: 0.5rem 1rem;
+            }
+            .stTextInput>div>div>input {
+                background-color: #222222;
+                color: white;
+            }
+            .stTextArea textarea {
+                background-color: #222222;
+                color: white;
+            }
+            .css-1d391kg {  /* sidebar */
+                background-color: #0f0f0f;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+set_dark_mode()
+
 st.set_page_config(page_title="Decision AI Assistant ", page_icon="🤖", layout="wide")
 st.title("Bem vindo ao Decision AI, nosso assistente de recrutamento")
 
@@ -304,6 +337,8 @@ def load_job_descriptions(json_path="vagas.json"):
     try:
         with open(json_path, "r", encoding="utf-8") as f:
             jobs = json.load(f)
+        seen = set()
+        vagas_list = []
         for job_id, v in jobs.items():
             info = v.get('informacoes_basicas', {})
             profile = v.get('perfil_vaga', {})

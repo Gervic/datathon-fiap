@@ -7,11 +7,11 @@ from PyPDF2 import PdfReader
 from docx import Document
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-import joblib # Importar joblib para carregar scaler e modelo ML
+from sentence_transformers import SentenceTransformer
+import joblib
 import gzip
 import io
 import json 
-import joblib
 import numpy as np
 
 def set_dark_mode():

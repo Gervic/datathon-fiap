@@ -31,7 +31,7 @@ st.set_page_config(page_title="Decision AI Assistant ", page_icon="🤖", layout
 st.title("Bem vindo ao Decision AI, nosso assistente de recrutamento")
 
 #st.sidebar.header('HR Analytics')
-st.sidebar.image("AI motion.gif", use_column_width=True)
+st.sidebar.image("AI motion.gif", use_container_width=True)
 st.sidebar.subheader("Configurações")
 theme = st.sidebar.selectbox("Tema", ["Escuro", "Claro"], index=0)
 if theme == "Escuro":

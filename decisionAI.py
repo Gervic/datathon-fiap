@@ -44,10 +44,24 @@ def set_dark_mode():
         </style>
     """, unsafe_allow_html=True)
 
-set_dark_mode()
-
 st.set_page_config(page_title="Decision AI Assistant ", page_icon="🤖", layout="wide")
 st.title("Bem vindo ao Decision AI, nosso assistente de recrutamento")
+
+st.sidebar.header('`HR Analytics`')
+st.sidebar.image("decisionAI_image.png", width=400)
+st.sidebar.subheader("Configurações")
+theme = st.sidebar.selectbox("Tema", ["Claro", "Escuro"], index=0)
+if theme == "Escuro":
+    set_dark_mode()
+
+with st.sidebar.expander("Sobre"):
+        st.markdown("""
+        **DecisionAI** é uma inteligência criada para auxiliar os recruitadores na missão de encontrar os talentos mais aderentes às vagas de forma ágil.
+        
+        Combina o poder do machine learning e das LLMs para criar um relatório completo sobre os candidatos.
+        
+        📧 [Contato para Suporte](email para:suporte@decision-hr-analytics.com)
+        """)
 
 particles_js = """<!DOCTYPE html>
 <html lang="en">

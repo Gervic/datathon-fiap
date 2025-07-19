@@ -30,8 +30,8 @@ def set_dark_mode():
 st.set_page_config(page_title="Decision AI Assistant ", page_icon="🤖", layout="wide")
 st.title("Bem vindo ao Decision AI, nosso assistente de recrutamento")
 
-st.sidebar.header('`HR Analytics`')
-st.sidebar.image("decisionAI_image.png", width=400)
+#st.sidebar.header('HR Analytics')
+st.sidebar.image("AI motion.gif", width=400)
 st.sidebar.subheader("Configurações")
 theme = st.sidebar.selectbox("Tema", ["Escuro", "Claro"], index=0)
 if theme == "Escuro":

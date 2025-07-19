@@ -27,24 +27,6 @@ def set_dark_mode():
                 background-color: #111;
                 color: white;
             }
-            .stButton>button {
-                background-color: #1f1f1f;
-                color: white;
-                border: 1px solid #ffffff33;
-                border-radius: 6px;
-                padding: 0.5rem 1rem;
-            }
-            .stTextInput>div>div>input {
-                background-color: #222222;
-                color: white;
-            }
-            .stTextArea textarea {
-                background-color: #222222;
-                color: white;
-            }
-            .css-1d391kg {  /* sidebar */
-                background-color: #0f0f0f;
-            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -64,7 +46,7 @@ with st.sidebar.expander("Sobre"):
         
         Combina o poder do machine learning e das LLMs para criar um relatório completo sobre os candidatos.
         
-        📧 [Contato para Suporte](email para:suporte@decision-hr-analytics.com)
+        📧 [Contato para Suporte](mailto:suporte@decision-hr-analytics.com)
         """)
 
 particles_js = """<!DOCTYPE html>
@@ -617,3 +599,7 @@ if st.button("🏠 Início / Limpar Conversa"):
     st.session_state.job_list = []
     st.session_state.selected_job_title = "Selecionar uma vaga"
     st.rerun() 
+
+# Add footer
+st.markdown("---")
+st.markdown("Copyrights DecisionAI 2025") 

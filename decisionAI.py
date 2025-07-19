@@ -9,7 +9,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import joblib # Importar joblib para carregar scaler e modelo ML
 import gzip
-from sentence_transformers import SentenceTransformer # Importar o modelo de embedding
 import io
 import json 
 import numpy as np
@@ -208,9 +207,6 @@ if st.session_state.show_animation:
 @st.cache_resource # Caching the model loading, runs only once
 def load_ml_models():
     try:
-        # Load SentenceTransformer model
-        sbert_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2') 
-
         with gzip.open('resume_matching_model_2.pkl.gz', 'rb') as f:
           dat = joblib.load(f)
       
@@ -219,6 +215,9 @@ def load_ml_models():
         
         # Load RandomForestClassifier model
         clf_model = dat['model'] 
+      
+        # Load SentenceTransformer model
+        sbert_model = dat['embedder'] 
         
         # Load ideal employee embeddings
         with open('job_ideal_embeddings.json', 'r') as f:
@@ -305,7 +304,27 @@ def load_job_descriptions(json_path="vagas.json"):
     try:
         with open(json_path, "r", encoding="utf-8") as f:
             jobs = json.load(f)
-        return jobs
+        for job_id, v in jobs.items():
+            info = v.get('informacoes_basicas', {})
+            profile = v.get('perfil_vaga', {})
+            job_text = ' '.join([
+                info.get('titulo_vaga', '') or '',
+                info.get('objetivo_vaga', '') or '',
+                profile.get('nivel profissional'),
+                profile.get('areas_atuacao') or '',
+                profile.get('principais_atividades') or '',
+                profile.get('competencia_tecnicas_e_comportamentais') or '',
+                profile.get('habilidades_comportamentais_necessarias') or '',
+                profile.get('demais_observacoes') or ''
+        
+            ])
+            if job_id not in seen:
+              seen.add(job_id)
+              vagas_list.append({'job_id': job_id,
+                                  'titulo':f"{job_id} - {info.get('titulo_vaga', '')}",
+                                 'descricao': job_text
+                                })
+        return vagas_list
     except FileNotFoundError:
         st.error(f"Erro: Arquivo '{json_path}' não encontrado. Por favor, verifique o caminho.")
         return []

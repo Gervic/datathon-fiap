@@ -1,6 +1,7 @@
 streamlit>=1.35.0
-scikit-learn
+scikit-learn==1.6.1
 google-generativeai
+sentence_transformers==4.1.0
 python-dotenv
 PyPDF2
 pypdf==3.17.4

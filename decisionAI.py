@@ -23,6 +23,10 @@ def set_dark_mode():
             h1, h2, h3, h4, h5, h6, p, span, div {
                 color: #ffffff;
             }
+            section[data-testid="stSidebar"] {
+                background-color: #111;
+                color: white;
+            }
             .stButton>button {
                 background-color: #1f1f1f;
                 color: white;

@@ -30,9 +30,9 @@ def set_dark_mode():
 st.set_page_config(page_title="Decision AI Assistant ", page_icon="🤖", layout="wide")
 st.title("Bem vindo ao Decision AI, nosso assistente de recrutamento")
 
-st.sidebar.header('DecisionAI Hub')
+st.sidebar.title('DecisionAI Hub')
 st.sidebar.image("AI motion.gif", use_container_width=True)
-st.sidebar.subheader("Configurações")
+st.sidebar.header("Configurações")
 theme = st.sidebar.selectbox("Tema", ["Escuro", "Claro"], index=0)
 if theme == "Escuro":
     set_dark_mode()
@@ -574,7 +574,7 @@ elif st.session_state.selected_action == 'ask_question':
 
         gemini_chat_history = to_gemini_history(st.session_state.messages[:-1])
 
-        with st.chat_message("assistant", avatar='Voice assistant motion effect.gif'):
+        with st.chat_message("assistant", avatar='3d-ai-assistant-icon.avif'):
             with st.spinner("Pensando..."):
                 try:
                     chat_session = model_gemini.start_chat(history=gemini_chat_history)

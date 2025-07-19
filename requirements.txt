@@ -1,6 +1,4 @@
-streamlit
-pdfminer.six
-sentence-transformers
+streamlit==1.32.0
 scikit-learn
 google-generativeai
 python-dotenv

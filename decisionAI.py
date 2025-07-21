@@ -31,6 +31,8 @@ def set_dark_mode():
 st.set_page_config(page_title="Decision AI Assistant ", page_icon="🤖", layout="wide")
 st.title("Bem vindo ao Decision AI, nosso assistente de recrutamento")
 
+st.write(f"Estado atual da ação selecionada: {st.session_state.selected_action}")
+
 st.sidebar.title('DecisionAI Hub')
 st.sidebar.image("AI motion.gif", use_container_width=True)
 st.sidebar.subheader("Configurações")

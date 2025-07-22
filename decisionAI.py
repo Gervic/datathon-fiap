@@ -31,7 +31,6 @@ def set_dark_mode():
 st.set_page_config(page_title="Decision AI Assistant ", page_icon="🤖", layout="wide")
 st.title("Bem vindo ao Decision AI, nosso assistente de recrutamento")
 
-st.write(f"Estado atual da ação selecionada: {st.session_state.selected_action}")
 
 st.sidebar.title('DecisionAI Hub')
 st.sidebar.image("AI motion.gif", use_container_width=True)
@@ -236,6 +235,7 @@ if "show_animation" not in st.session_state:
 if st.session_state.show_animation:
     components.html(particles_js, height=370, scrolling=False)
 
+st.write(f"Estado atual da ação selecionada: {st.session_state.selected_action}")
 # Loading ML Models and Data (Cached) 
 @st.cache_resource # Caching the model loading, runs only once
 def load_ml_models():

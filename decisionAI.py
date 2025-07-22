@@ -500,7 +500,7 @@ if st.session_state.selected_action == 'analyze_cv':
 
                     # Calculate cosine similarity to ideal employee profile
                     cosine_to_ideal = 0.0
-                    if job_id_selected and job_id_selected in job_ideal_embeds:
+                    if job_id_selected in job_ideal_embeds:
                         ideal_embedding = job_ideal_embeds[job_id_selected]
                         cosine_to_ideal = calculate_cosine_similarity_embeddings(cv_embedding, ideal_embedding) * 100
                     elif job_id_selected:
@@ -564,7 +564,7 @@ if st.session_state.selected_action == 'analyze_cv':
                     )
 
                 st.session_state.messages.append({"role": "assistant", "content": ranking_message})
-                st.rerun() 
+                #st.rerun() 
 
 #General Chat Input (for "Tirar uma dúvida" or follow-ups)
 elif st.session_state.selected_action == 'ask_question':

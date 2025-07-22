@@ -235,7 +235,7 @@ if "show_animation" not in st.session_state:
 if st.session_state.show_animation:
     components.html(particles_js, height=370, scrolling=False)
 
-st.write(f"Estado atual da ação selecionada: {st.session_state.selected_action}")
+st.write(f"Ação selecionada: {st.session_state.selected_action}")
 # Loading ML Models and Data (Cached) 
 @st.cache_resource # Caching the model loading, runs only once
 def load_ml_models():
@@ -421,7 +421,7 @@ if st.session_state.selected_action == 'analyze_cv':
                 st.session_state.analysis_results = []
     
                 for uploaded_file in uploaded_files:
-                    with st.sidebar.spinner(f"Lendo CV: {uploaded_file.name}..."):
+                    with st.spinner(f"Lendo CV: {uploaded_file.name}..."):
                         extracted_text = get_text_from_file(uploaded_file)
                         if extracted_text:
                             st.session_state.uploaded_cvs_data[uploaded_file.name] = extracted_text

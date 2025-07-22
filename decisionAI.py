@@ -381,14 +381,14 @@ if not st.session_state.messages and st.session_state.selected_action is None:
     with col1:
         if st.button("📝 Analisar CV(s)", use_container_width=True):
             st.session_state.selected_action = 'analyze_cv'
-            print(f"DEBUG: selected_action após clique 'Analisar CVs': {st.session_state.selected_action}") # DEBUG PRINT
+            st.write(f"DEBUG: selected_action após clique 'Analisar CVs': {st.session_state.selected_action}") # DEBUG PRINT
             st.session_state.messages.append({"role": "user", "content": "Quero analisar CV(s)."})
             st.session_state.messages.append({"role": "assistant", "content": "Ok! Por favor, faça o upload de até 5 CVs na barra lateral e **selecione a vaga desejada**."})
             st.rerun() 
     with col2:
         if st.button("❓ Tirar uma dúvida", use_container_width=True):
             st.session_state.selected_action = 'ask_question'
-            print(f"DEBUG: selected_action após clique 'Tirar dúvida': {st.session_state.selected_action}") # DEBUG PRINT
+            st.write(f"DEBUG: selected_action após clique 'Tirar dúvida': {st.session_state.selected_action}") # DEBUG PRINT
             st.session_state.messages.append({"role": "user", "content": "Quero tirar uma dúvida."})
             st.session_state.messages.append({"role": "assistant", "content": "Certo! Pergunte o que quiser."})
             st.rerun() 

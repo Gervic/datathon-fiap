@@ -532,6 +532,7 @@ if st.session_state.selected_action == 'analyze_cv':
                         f"Formate a resposta com os seguintes tópicos: 'Pontos Fortes', 'Pontos a Melhorar', 'Recomendação Final do Modelo'."
                     )
                     try:
+                        with st.spinner('DecisionAI está gerando os reports')
                         response = model_gemini.generate_content(analysis_prompt)
                         ai_analysis = response.text
                     except Exception as e:

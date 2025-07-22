@@ -563,7 +563,7 @@ if st.session_state.selected_action == 'analyze_cv':
                         f"**Análise Detalhada:**\n{result['analysis']}\n\n"
                         f"---\n\n" 
                     )
-                with spinner('Saindo do forno...'):
+                with st.spinner('Saindo do forno...'):
                     st.session_state.messages.append({"role": "assistant", "content": ranking_message})
                     #st.rerun() 
 

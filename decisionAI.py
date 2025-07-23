@@ -395,6 +395,7 @@ for message in st.session_state.messages:
 
 #Conditional UI for CV Analysis (Multiple Files + Job Selection)
 if choice == "Analisar CVs":
+    st.session_state.selected_action = 'analyze_cv'
     st.session_state.messages.append({"role": "user", "content": "Quero analisar CV(s)."})
     st.session_state.messages.append({"role": "assistant", "content": "Ok! Por favor, faça o upload de até 5 CVs na barra lateral e **selecione a vaga desejada**."})
 #if st.session_state.selected_action == 'analyze_cv':
@@ -567,6 +568,7 @@ if choice == "Analisar CVs":
 
 #General Chat Input (for "Tirar uma dúvida" or follow-ups)
 else: #st.session_state.selected_action == 'ask_question':
+    st.session_state.selected_action = 'ask_question'
     st.session_state.messages.append({"role": "user", "content": "Quero tirar uma dúvida."})
     st.session_state.messages.append({"role": "assistant", "content": "Certo! Pergunte o que quiser."})
     prompt = st.chat_input("Pergunte o que quiser...")

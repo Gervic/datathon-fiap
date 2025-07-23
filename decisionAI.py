@@ -212,7 +212,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "selected_action" not in st.session_state:
-    st.session_state.selected_action = 'analyze_cv'
+    st.session_state.selected_action = None #'analyze_cv'
 
 if "uploaded_cvs_data" not in st.session_state:
     st.session_state.uploaded_cvs_data = {} # Stores {filename: text}
@@ -377,16 +377,21 @@ if not st.session_state.messages and st.session_state.selected_action is None:
     with st.chat_message("assistant", avatar= '3d-ai-assistant-icon.avif'):
         st.markdown(st.session_state.messages[0]["content"])
 
-    col1, col2 = st.columns(2)
+    options = [
+    "Analisar CVs",
+    "Conversar / Tirar dúvidas com a IA"
+]
+
+    choice = st.radio("Por favor, escolha uma opção:", options)
     
-    if col1.button("📝 Analisar CV(s)", use_container_width=True):
+    if choice == "Analisar CVs":
         st.session_state.selected_action = 'analyze_cv'
         st.write(f"DEBUG: selected_action após clique 'Analisar CVs': {st.session_state.selected_action}") # DEBUG PRINT
         st.session_state.messages.append({"role": "user", "content": "Quero analisar CV(s)."})
         st.session_state.messages.append({"role": "assistant", "content": "Ok! Por favor, faça o upload de até 5 CVs na barra lateral e **selecione a vaga desejada**."})
         #st.rerun() 
 
-    if col2.button("❓ Tirar uma dúvida", use_container_width=True):
+    if choice == "Conversar / Tirar dúvidas com a IA":
         st.session_state.selected_action = 'ask_question'
         st.write(f"DEBUG: selected_action após clique 'Tirar dúvida': {st.session_state.selected_action}") # DEBUG PRINT
         st.session_state.messages.append({"role": "user", "content": "Quero tirar uma dúvida."})

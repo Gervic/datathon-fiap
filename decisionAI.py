@@ -208,7 +208,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "selected_action" not in st.session_state:
-    st.session_state.selected_action = 'analyze_cv'
+    st.session_state.selected_action = None #'analyze_cv'
 
 if "uploaded_cvs_data" not in st.session_state:
     st.session_state.uploaded_cvs_data = {} # Stores {filename: text}
@@ -564,7 +564,7 @@ if st.session_state.selected_action == 'analyze_cv':
                     
 
 #General Chat Input (for "Tirar uma dúvida" or follow-ups)
-elif st.session_state.selected_action == 'ask_question':
+else: #st.session_state.selected_action == 'ask_question':
     prompt = st.chat_input("Pergunte o que quiser...")
     if prompt:
         st.session_state.messages.append({"role": "user", "content": prompt})

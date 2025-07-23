@@ -34,10 +34,6 @@ st.title("Bem vindo ao Decision AI, nosso assistente de recrutamento")
 
 st.sidebar.title('DecisionAI Hub')
 st.sidebar.image("AI motion.gif", use_container_width=True)
-st.sidebar.subheader("Configurações")
-theme = st.sidebar.selectbox("Tema", ["Escuro", "Claro"], index=0)
-if theme == "Escuro":
-    set_dark_mode()
 
 with st.sidebar.expander("Sobre"):
         st.markdown("""
@@ -387,7 +383,7 @@ if not st.session_state.messages and st.session_state.selected_action is None:
         st.session_state.selected_action = 'analyze_cv'
         st.session_state.messages.append({"role": "user", "content": "Quero analisar CV(s)."})
         st.session_state.messages.append({"role": "assistant", "content": "Ok! Por favor, faça o upload de até 5 CVs na barra lateral e **selecione a vaga desejada**."})
-    else: #choice == "Conversar / Tirar dúvidas com a IA":
+    if choice == "Conversar / Tirar dúvidas com a IA":
         st.session_state.selected_action = 'ask_question'
         st.session_state.messages.append({"role": "user", "content": "Quero tirar uma dúvida."})
         st.session_state.messages.append({"role": "assistant", "content": "Certo! Pergunte o que quiser."})
@@ -589,6 +585,11 @@ elif st.session_state.selected_action == 'ask_question':
                     st.error(ai_response)
         st.session_state.messages.append({"role": "assistant", "content": ai_response})
 
+st.sidebar.subheader("Configurações")
+theme = st.sidebar.selectbox("Tema", ["Escuro", "Claro"], index=0)
+if theme == "Escuro":
+    set_dark_mode()
+    
 # Clear Chat / Reset Options
 if st.button("🏠 Início / Limpar Conversa"):
     st.session_state.messages = []

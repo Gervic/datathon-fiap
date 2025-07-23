@@ -566,7 +566,7 @@ if st.session_state.selected_action == 'analyze_cv':
                     )
                 with st.spinner('Saindo do forno...'):
                     st.session_state.messages.append({"role": "assistant", "content": ranking_message})
-                    st.markdown(st.session_state.messages[:-1]["content"])
+                    st.markdown(st.session_state.messages[-1]["content"])
                     st.rerun() 
 
 #General Chat Input (for "Tirar uma dúvida" or follow-ups)

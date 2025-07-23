@@ -365,19 +365,18 @@ def load_job_descriptions(json_path="vagas.json"):
 if not st.session_state.job_list:
     st.session_state.job_list = load_job_descriptions()
 
+options = [
+            "Analisar CVs",
+            "Conversar / Tirar dúvidas com a IA"
+        ]
+
+choice = st.radio("Por favor, escolha uma opção:", options=options, index=None)
 
 # Initial Welcome Message and Action Choice
 if not st.session_state.messages and st.session_state.selected_action is None:
     st.session_state.messages.append({"role": "assistant", "content": "Olá! Bem-vindo ao DecisionAI, o hub inteligente de recrutamento. O que gostaria de fazer?"})
     with st.chat_message("assistant", avatar= '3d-ai-assistant-icon.avif'):
         st.markdown(st.session_state.messages[0]["content"])
-
-    options = [
-                "Analisar CVs",
-                "Conversar / Tirar dúvidas com a IA"
-            ]
-
-    choice = st.radio("Por favor, escolha uma opção:", options=options, index=None)
     
     #if choice == "Analisar CVs":
         #st.session_state.selected_action = 'analyze_cv'

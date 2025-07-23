@@ -515,6 +515,7 @@ if st.session_state.selected_action == 'analyze_cv':
 
                     # Determine recommendation based on a threshold (e.g., > 50%)
                     recommended = prediction_proba >= 70 # You can adjust this threshold
+                    st.write(f"probabilidade: {prediction_proba}")
 
                     # Formulate prompt for Gemini, including ML prediction
                     analysis_prompt = (

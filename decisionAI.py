@@ -208,7 +208,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "selected_action" not in st.session_state:
-    st.session_state.selected_action = 'ask_question' #'analyze_cv'
+    st.session_state.selected_action = 'analyze_cv'
 
 if "uploaded_cvs_data" not in st.session_state:
     st.session_state.uploaded_cvs_data = {} # Stores {filename: text}

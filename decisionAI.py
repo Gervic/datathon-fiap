@@ -28,7 +28,7 @@ def set_dark_mode():
         </style>
     """, unsafe_allow_html=True)
 
-st.set_page_config(page_title="Decision AI Assistant ", page_icon="🤖", layout="wide")
+st.set_page_config(page_title="Decision AI Assistant ", page_icon='3d-ai-assistant-icon.avif', layout="wide")
 st.title("Bem vindo ao Decision AI, nosso assistente de recrutamento")
 
 
@@ -235,7 +235,6 @@ if "show_animation" not in st.session_state:
 if st.session_state.show_animation:
     components.html(particles_js, height=370, scrolling=False)
 
-st.write(f"Ação selecionada: {st.session_state.selected_action}")
 # Loading ML Models and Data (Cached) 
 @st.cache_resource # Caching the model loading, runs only once
 def load_ml_models():
@@ -378,24 +377,20 @@ if not st.session_state.messages and st.session_state.selected_action is None:
         st.markdown(st.session_state.messages[0]["content"])
 
     options = [
-    "Analisar CVs",
-    "Conversar / Tirar dúvidas com a IA"
-]
+                "Analisar CVs",
+                "Conversar / Tirar dúvidas com a IA"
+            ]
 
-    choice = st.radio("Por favor, escolha uma opção:", options)
+    choice = st.radio("Por favor, escolha uma opção:", options=options, index=None)
     
     if choice == "Analisar CVs":
         st.session_state.selected_action = 'analyze_cv'
-        st.write(f"DEBUG: selected_action após clique 'Analisar CVs': {st.session_state.selected_action}") # DEBUG PRINT
         st.session_state.messages.append({"role": "user", "content": "Quero analisar CV(s)."})
         st.session_state.messages.append({"role": "assistant", "content": "Ok! Por favor, faça o upload de até 5 CVs na barra lateral e **selecione a vaga desejada**."})
-        #st.rerun() 
     else: #choice == "Conversar / Tirar dúvidas com a IA":
         st.session_state.selected_action = 'ask_question'
-        st.write(f"DEBUG: selected_action após clique 'Tirar dúvida': {st.session_state.selected_action}") # DEBUG PRINT
         st.session_state.messages.append({"role": "user", "content": "Quero tirar uma dúvida."})
         st.session_state.messages.append({"role": "assistant", "content": "Certo! Pergunte o que quiser."})
-        #st.rerun() 
 
 #Display Chat History
 for message in st.session_state.messages:
@@ -507,8 +502,8 @@ if st.session_state.selected_action == 'analyze_cv':
                     if job_id_selected in job_ideal_embeds:
                         ideal_embedding = job_ideal_embeds[job_id_selected]
                         cosine_to_ideal = calculate_cosine_similarity_embeddings(cv_embedding, ideal_embedding) * 100
-                    elif job_id_selected:
-                        st.warning(f"Embedding do perfil ideal não encontrado para Job ID: {job_id_selected} (CV: {cv_name}). A similaridade com o perfil ideal não será calculada para este CV.")
+                    #elif job_id_selected:
+                        #st.warning(f"Embedding do perfil ideal não encontrado para Job ID: {job_id_selected} (CV: {cv_name}). A similaridade com o perfil ideal não será calculada para este CV.")
 
                     # Prepare features for the ML model
                     features = np.array([[cosine_to_job, cosine_to_ideal]])
@@ -519,7 +514,6 @@ if st.session_state.selected_action == 'analyze_cv':
 
                     # Determine recommendation based on a threshold (e.g., > 50%)
                     recommended = prediction_proba >= 70 # You can adjust this threshold
-                    st.write(f"probabilidade: {prediction_proba}")
 
                     # Formulate prompt for Gemini, including ML prediction
                     analysis_prompt = (
@@ -537,7 +531,7 @@ if st.session_state.selected_action == 'analyze_cv':
                         f"Formate a resposta com os seguintes tópicos: 'Pontos Fortes', 'Pontos a Melhorar', 'Recomendação Final do Modelo'."
                     )
                     try:
-                        with st.spinner('DecisionAI está gerando os reports'):
+                        with st.spinner('DecisionAI está gerando os reports...'):
                             response = model_gemini.generate_content(analysis_prompt)
                             ai_analysis = response.text
                     except Exception as e:
@@ -571,7 +565,7 @@ if st.session_state.selected_action == 'analyze_cv':
                 with st.spinner('Saindo do forno...'):
                     st.session_state.messages.append({"role": "assistant", "content": ranking_message})
                     st.markdown(st.session_state.messages[-1]["content"])
-                    #st.rerun() 
+                    
 
 #General Chat Input (for "Tirar uma dúvida" or follow-ups)
 elif st.session_state.selected_action == 'ask_question':
@@ -608,4 +602,4 @@ if st.button("🏠 Início / Limpar Conversa"):
 
 # Add footer
 st.markdown("---")
-st.markdown("Copyrights DecisionAI 2025") 
+st.markdown("Copyrights @DecisionAI 2025") 

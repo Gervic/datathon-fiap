@@ -3,6 +3,7 @@
 This project was developed as the final challenge of the FIAP Tech Postgraduate Program.
 The goal is to build an AI-powered recruitment app, leveraging embeddings from resumes and job descriptions to provide insights about candidate suitability.
 
+
 📂 Project Structure
 
 
@@ -31,6 +32,7 @@ The goal is to build an AI-powered recruitment app, leveraging embeddings from r
 
 ⚙️ How It Works
 
+
 Embeddings:
 
 job_texts_embeddings.json: embeddings of job descriptions.
@@ -53,6 +55,7 @@ A Gemini model consumes these results and produces a textual analysis of the sub
 
 
 🚀 Running the Project
+
 
 Clone the repository
 
@@ -80,9 +83,12 @@ In the file decisionAI.env, insert your API key (ex.: Gemini).
 
 Run the app
 
-`python decisionAI.py`
+`python decisionAI.py` 
+
+
 
 📊 Expected Results
+
 
 Resume ↔ Job description similarity
 

@@ -1,10 +1,12 @@
 🤖 Datathon-FIAP – AI Recruitment App
+-----
 
 This project was developed as the final challenge of the FIAP Tech Postgraduate Program.
 The goal is to build an AI-powered recruitment app, leveraging embeddings from resumes and job descriptions to provide insights about candidate suitability.
 
 
 📂 Project Structure
+------
 
 
 ├ decisionAI.py                 # App Script 
@@ -31,6 +33,7 @@ The goal is to build an AI-powered recruitment app, leveraging embeddings from r
 
 
 ⚙️ How It Works
+-----
 
 
 Embeddings:
@@ -55,27 +58,30 @@ A Gemini model consumes these results and produces a textual analysis of the sub
 
 
 🚀 Running the Project
+------
 
 
 Clone the repository
 
-`
+```bash
 git clone https://github.com/seu-repo/datathon-fiap.git
 cd datathon-fiap
-`
+```
 
 
 Create a virtual environment (opcional)
-`
+```bash
 python -m venv venv
 source venv/bin/activate   # Linux/Mac
 venv\Scripts\activate      # Windows
-`
+```
 
 
 Install the dependencies
 
-`pip install -r requirements.txt`
+```bash
+pip install -r requirements.txt
+```
 
 
 Configure the variables
@@ -83,11 +89,14 @@ In the file decisionAI.env, insert your API key (ex.: Gemini).
 
 Run the app
 
-`python decisionAI.py` 
+```bash
+python decisionAI.py
+``` 
 
 
 
 📊 Expected Results
+-------
 
 
 Resume ↔ Job description similarity

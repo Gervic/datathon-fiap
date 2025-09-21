@@ -1,5 +1,5 @@
 🤖 Datathon-FIAP – AI Recruitment App
------
+------
 
 This project was developed as the final challenge of the FIAP Tech Postgraduate Program.
 The goal is to build an AI-powered recruitment app, leveraging embeddings from resumes and job descriptions to provide insights about candidate suitability.

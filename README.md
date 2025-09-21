@@ -4,6 +4,8 @@
 This project was developed as the final challenge of the FIAP Tech Postgraduate Program.
 The goal is to build an AI-powered recruitment app, leveraging embeddings from resumes and job descriptions to provide insights about candidate suitability.
 
+[Link to app on streamlit](https://decision-datathon-fiap.streamlit.app/)
+
 
 📂 Project Structure
 ------
